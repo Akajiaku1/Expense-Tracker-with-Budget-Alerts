@@ -1,0 +1,95 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { Trash, PlusCircle, AlertTriangle } from "lucide-react";
+
+export default function ExpenseTracker() {
+  const [expenses, setExpenses] = useState([]);
+  const [budget, setBudget] = useState(500); // Default budget
+  const [newExpense, setNewExpense] = useState({ name: "", amount: "" });
+  const [alert, setAlert] = useState(false);
+
+  useEffect(() => {
+    const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    setAlert(total >= budget * 0.9); // Alert when reaching 90% of budget
+  }, [expenses, budget]);
+
+  const addExpense = () => {
+    if (!newExpense.name || !newExpense.amount) return;
+    const amount = parseFloat(newExpense.amount);
+    if (isNaN(amount) || amount <= 0) return;
+    setExpenses([...expenses, { ...newExpense, amount }]);
+    setNewExpense({ name: "", amount: "" });
+  };
+
+  const removeExpense = (index) => {
+    setExpenses(expenses.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="max-w-lg mx-auto p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Expense Tracker</h1>
+      {alert && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          className="p-2 bg-red-500 text-white rounded flex items-center">
+          <AlertTriangle className="mr-2" /> Warning: You are nearing your budget limit!
+        </motion.div>
+      )}
+      <Card>
+        <CardContent className="p-4 space-y-2">
+          <div className="flex space-x-2">
+            <Input
+              type="text"
+              placeholder="Expense name"
+              value={newExpense.name}
+              onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+            />
+            <Input
+              type="number"
+              placeholder="Amount"
+              value={newExpense.amount}
+              onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+            />
+            <Button onClick={addExpense}>
+              <PlusCircle />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="text-lg font-semibold">Expenses</h2>
+          {expenses.length === 0 ? (
+            <p className="text-gray-500">No expenses yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {expenses.map((expense, index) => (
+                <li key={index} className="flex justify-between p-2 bg-gray-100 rounded">
+                  <span>{expense.name} - ${expense.amount.toFixed(2)}</span>
+                  <Button size="sm" variant="destructive" onClick={() => removeExpense(index)}>
+                    <Trash />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-4 flex justify-between">
+          <span className="font-semibold">Budget:</span>
+          <input
+            type="number"
+            value={budget}
+            onChange={(e) => setBudget(parseFloat(e.target.value) || 0)}
+            className="border p-1 rounded w-20"
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
